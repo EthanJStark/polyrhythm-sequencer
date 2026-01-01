@@ -4,9 +4,11 @@ An interactive musical sequencer that turns a hundreds chart into polyrhythmic p
 
 **Live Demo:** https://ethanjstark.github.io/polyrhythm-sequencer/
 
+*Disclaimer: The demo will make sounds on mobile, but the visual experience works best on desktop.*
+
 ## The Inspiration
 
-New Year's Day 2026. The first thing my 6 year old proudly showed me was this hundreds chart pattern he filled in with his Nana. I told him it reminded me of music—polyrhythms—and he started singing the numbers back to me. Then, he and I built this together.
+New Year's Day 2026. The first thing my 6 year old proudly showed me was this hundreds chart pattern he filled in with his Nana. I told him it reminded me of music—polyrhythms—and he started singing "musical squares." Too bad it was nap time, but I promised him the next day we would "turn it into real music" on the computer.
 
 ![The hundreds chart that started it all](process/100s.jpg)
 
