@@ -326,12 +326,21 @@
         </div>
 
         <div class="row" style="margin-top:10px;">
-          <button id="autoAssign" class="btn">Auto-assign "sweet" notes</button>
-          <span class="small">Uses chord-aware voicing for pleasant overlaps.</span>
+          <label for="skipPattern">Harmony pattern</label>
+          <select id="skipPattern">
+            <option value="0">Skip 0 (dense/chromatic)</option>
+            <option value="1" selected>Skip 1 (thirds - consonant)</option>
+            <option value="2">Skip 2 (fourths/fifths)</option>
+          </select>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button id="autoAssign" class="btn">Auto-assign harmony pattern</button>
+          <span class="small">Applies skip pattern for consonant intervals.</span>
         </div>
         <p class="small" style="margin:8px 0 0 0; line-height:1.5;">
-          <strong>Scale tips:</strong> Major pentatonic = bright & consonant; Minor pentatonic = mellow & bluesy;
-          Whole tone = dreamy & ambient; Major/Dorian = rich harmonies.
+          <strong>Scale tips:</strong> Major pentatonic = bright & consonant (best for harmony); Minor pentatonic = mellow & bluesy;
+          Whole tone = dreamy & ambient; Major/Dorian = rich harmonies. Pentatonic scales work best with the harmony system.
         </p>
 
         <div class="divider"></div>
@@ -426,6 +435,7 @@
     tempo: 80,
     stepUnit: 8, // 8th by default
     lanes: [],
+    skipPattern: 1, // 0=dense, 1=thirds (consonant), 2=fourths/fifths
     vizMode: "pulse", // "pulse" | "starburst" | "dots"
     // audio
     ctx: null,
@@ -457,6 +467,7 @@
   const scaleEl = $("scale");
   const rootEl = $("root");
   const octEl = $("oct");
+  const skipPatternEl = $("skipPattern");
   const playBtn = $("playBtn");
   const stopBtn = $("stopBtn");
   const addLaneBtn = $("addLane");
@@ -700,39 +711,16 @@
   }
 
   function autoAssignSweetNotes(){
-    // Chord-aware assignment: prioritize consonant intervals
-    // For most scales, degrees 0, 2, 4 form nice triadic structures (root, third, fifth)
-    // Then fill in other degrees, potentially spreading across octaves
     const scale = currentScale();
-    const scaleLen = scale.length;
+    const skip = state.skipPattern;
 
-    // Priority order: root, third, fifth, then others, then octave up
-    let degreeOrder;
-
-    if(scaleLen === 5){
-      // Pentatonic: 0(root), 2(fourth), 4(sixth), 1(second), 3(fifth) - spread for consonance
-      // Better: 0, 4(+12 = octave up), 2, 1, 3
-      degreeOrder = [0, 2, 4, 1, 3];
-    } else if(scaleLen === 7){
-      // Heptatonic: 0(root), 2(third), 4(fifth), 6(seventh), 1, 3, 5
-      degreeOrder = [0, 2, 4, 6, 1, 3, 5];
-    } else if(scaleLen === 6){
-      // Hexatonic (whole tone): 0, 2, 4, 1, 3, 5
-      degreeOrder = [0, 2, 4, 1, 3, 5];
-    } else {
-      // Fallback: sequential
-      degreeOrder = Array.from({length: scaleLen}, (_, i) => i);
-    }
-
-    // Assign degrees with octave spreading for more than 4 lanes
     state.lanes.forEach((lane, i) => {
-      const baseIdx = i % degreeOrder.length;
-      const octaveShift = Math.floor(i / degreeOrder.length);
-
-      // For lanes beyond the first set, shift them up an octave
-      // by adding the scale length (which cycles to next octave in degreeToMidi)
-      lane.noteDegree = degreeOrder[baseIdx] + (octaveShift * scaleLen);
+      // Each lane gets: i * (skip + 1)
+      // skip=1: lanes get degrees 0, 2, 4, 6, 8... (every other)
+      // skip=2: lanes get degrees 0, 3, 6, 9... (every third)
+      lane.noteDegree = i * (skip + 1);
     });
+
     renderLanes();
   }
 
@@ -1019,6 +1007,11 @@
   });
   rootEl.addEventListener("change", () => {});
   octEl.addEventListener("change", () => {});
+
+  skipPatternEl.addEventListener("change", () => {
+    state.skipPattern = parseInt(skipPatternEl.value, 10);
+    autoAssignSweetNotes();
+  });
 
   playBtn.addEventListener("click", togglePlay);
   stopBtn.addEventListener("click", stop);
