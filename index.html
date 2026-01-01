@@ -305,6 +305,8 @@
             <option value="minPent">Minor pentatonic</option>
             <option value="major">Major</option>
             <option value="dorian">Dorian</option>
+            <option value="mixolydian">Mixolydian</option>
+            <option value="wholeTone">Whole tone</option>
           </select>
 
           <label for="root">Root</label>
@@ -324,9 +326,13 @@
         </div>
 
         <div class="row" style="margin-top:10px;">
-          <button id="autoAssign" class="btn">Auto-assign “sweet” notes</button>
-          <span class="small">Keeps chords consonant on overlaps.</span>
+          <button id="autoAssign" class="btn">Auto-assign "sweet" notes</button>
+          <span class="small">Uses chord-aware voicing for pleasant overlaps.</span>
         </div>
+        <p class="small" style="margin:8px 0 0 0; line-height:1.5;">
+          <strong>Scale tips:</strong> Major pentatonic = bright & consonant; Minor pentatonic = mellow & bluesy;
+          Whole tone = dreamy & ambient; Major/Dorian = rich harmonies.
+        </p>
 
         <div class="divider"></div>
 
@@ -407,7 +413,9 @@
     majPent: [0,2,4,7,9],
     minPent: [0,3,5,7,10],
     major:   [0,2,4,5,7,9,11],
-    dorian:  [0,2,3,5,7,9,10]
+    dorian:  [0,2,3,5,7,9,10],
+    mixolydian: [0,2,4,5,7,9,10],
+    wholeTone: [0,2,4,6,8,10]
   };
   const midiToHz = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -692,12 +700,38 @@
   }
 
   function autoAssignSweetNotes(){
-    // Assign each lane a different degree in a consonant scale
-    // Smaller divisors (more frequent) get more "stable" degrees early.
-    const degrees = currentScale().map((_,i)=>i); // 0..len-1
-    // Spread degrees across lanes; wrap if more lanes than scale degrees.
+    // Chord-aware assignment: prioritize consonant intervals
+    // For most scales, degrees 0, 2, 4 form nice triadic structures (root, third, fifth)
+    // Then fill in other degrees, potentially spreading across octaves
+    const scale = currentScale();
+    const scaleLen = scale.length;
+
+    // Priority order: root, third, fifth, then others, then octave up
+    let degreeOrder;
+
+    if(scaleLen === 5){
+      // Pentatonic: 0(root), 2(fourth), 4(sixth), 1(second), 3(fifth) - spread for consonance
+      // Better: 0, 4(+12 = octave up), 2, 1, 3
+      degreeOrder = [0, 2, 4, 1, 3];
+    } else if(scaleLen === 7){
+      // Heptatonic: 0(root), 2(third), 4(fifth), 6(seventh), 1, 3, 5
+      degreeOrder = [0, 2, 4, 6, 1, 3, 5];
+    } else if(scaleLen === 6){
+      // Hexatonic (whole tone): 0, 2, 4, 1, 3, 5
+      degreeOrder = [0, 2, 4, 1, 3, 5];
+    } else {
+      // Fallback: sequential
+      degreeOrder = Array.from({length: scaleLen}, (_, i) => i);
+    }
+
+    // Assign degrees with octave spreading for more than 4 lanes
     state.lanes.forEach((lane, i) => {
-      lane.noteDegree = degrees[i % degrees.length];
+      const baseIdx = i % degreeOrder.length;
+      const octaveShift = Math.floor(i / degreeOrder.length);
+
+      // For lanes beyond the first set, shift them up an octave
+      // by adding the scale length (which cycles to next octave in degreeToMidi)
+      lane.noteDegree = degreeOrder[baseIdx] + (octaveShift * scaleLen);
     });
     renderLanes();
   }
@@ -788,15 +822,27 @@
     // Voicing: sort by divisor so "more fundamental" lanes go lower
     const ordered = [...hits].sort((a,b) => a.divisor - b.divisor);
 
-    // Build distinct MIDI notes (avoid duplicates on overlaps)
+    // Build distinct MIDI notes with intelligent voicing
     const mids = [];
     ordered.forEach((lane, i) => {
-      // Spread a bit if many notes: every 3rd note goes up an octave
-      const degree = lane.noteDegree + (i >= 3 ? (i-2) : 0);
-      let midi = degreeToMidi(degree);
+      let midi = degreeToMidi(lane.noteDegree);
+
+      // Smart voicing for chords:
+      // - First 2 notes: keep in base octave
+      // - 3rd note: move up an octave for better spacing
+      // - 4th+ notes: move up an octave
+      if(i === 2 && ordered.length >= 3){
+        midi += 12; // third voice goes up an octave
+      } else if(i >= 3){
+        midi += 12; // fourth+ voices also go up
+      }
 
       // If two notes land same MIDI, bump one up an octave
       while(mids.includes(midi)) midi += 12;
+
+      // Keep reasonable range (not too high)
+      if(midi > 96) midi -= 12;
+
       mids.push(midi);
     });
 
@@ -976,6 +1022,15 @@
 
   playBtn.addEventListener("click", togglePlay);
   stopBtn.addEventListener("click", stop);
+
+  // Spacebar to play/pause
+  document.addEventListener("keydown", (e) => {
+    // Only trigger if spacebar and not typing in an input field
+    if(e.code === "Space" && e.target.tagName !== "INPUT" && e.target.tagName !== "SELECT" && e.target.tagName !== "TEXTAREA"){
+      e.preventDefault();
+      togglePlay();
+    }
+  });
 
   addLaneBtn.addEventListener("click", () => {
     const v = parseInt(newDivEl.value, 10);
