@@ -8,7 +8,7 @@ An interactive musical sequencer that turns a hundreds chart into polyrhythmic p
 
 ## The Inspiration
 
-New Year's Day 2026. The first thing my 6 year old proudly showed me was this hundreds chart pattern he filled in with his Nana. I told him it reminded me of music—polyrhythms—and he started singing "musical squares." Too bad it was nap time, but I promised him the next day we would "turn it into real music" on the computer.
+New Year's Day 2026. My 6-year-old woke me up to show me this hundreds chart pattern he'd been exploring. I told him it reminded me of music—polyrhythms—and he started singing the numbers back.
 
 ![The hundreds chart that started it all](process/100s.jpg)
 
