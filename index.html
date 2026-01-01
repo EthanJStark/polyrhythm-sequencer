@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>100s Polyrhythm Sequencer</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#111823;
+      --panel2:#0f1520;
+      --text:#e7eef8;
+      --muted:#a6b4c6;
+      --line:#253245;
+      --cell:#0f1622;
+      --cell2:#0d131e;
+      --accent:#69d2ff;
+      --current:#ffffff;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 600px at 20% 0%, #12243a 0%, var(--bg) 55%) fixed;
+      color:var(--text);
+      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    header{
+      padding:18px 18px 10px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    h1{ margin:0 0 6px; font-size:18px; font-weight:700; letter-spacing:.2px; }
+    .sub{ color:var(--muted); margin:0; }
+    .wrap{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:14px;
+      padding:14px 18px 22px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+    }
+    .card h2{
+      margin:0;
+      padding:12px 14px;
+      font-size:13px;
+      font-weight:700;
+      color:var(--muted);
+      background: rgba(0,0,0,.15);
+      border-bottom:1px solid rgba(255,255,255,.06);
+      letter-spacing:.3px;
+      text-transform:uppercase;
+    }
+    .card .content{ padding:14px; }
+
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    label{ color:var(--muted); }
+    input[type="range"]{ width: 100%; }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:9px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:650;
+      letter-spacing:.2px;
+    }
+    .btn:hover{ border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.09); }
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(105,210,255,.25), rgba(105,210,255,.10));
+      border-color: rgba(105,210,255,.45);
+    }
+    .btn.danger{
+      background: rgba(255,90,90,.10);
+      border-color: rgba(255,90,90,.28);
+    }
+    .small{ font-size:12px; color:var(--muted); }
+    .pill{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:6px 10px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:999px;
+      background: rgba(0,0,0,.15);
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    /* Lane list */
+    .lanes{ display:flex; flex-direction:column; gap:10px; }
+    .lane{
+      background: rgba(0,0,0,.20);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;
+      padding:10px;
+      display:grid;
+      grid-template-columns: 20px 1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+    .swatch{
+      width:14px; height:14px; border-radius:4px;
+      border:1px solid rgba(255,255,255,.25);
+      box-shadow: 0 0 0 2px rgba(0,0,0,.35) inset;
+    }
+    .lane .title{
+      display:flex; flex-direction:column;
+    }
+    .lane .title b{ font-size:13px; }
+    .lane .title span{ font-size:12px; color:var(--muted); }
+    .lane .controls{
+      display:flex; gap:8px; align-items:center;
+    }
+    select, input[type="number"]{
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:10px;
+      padding:7px 8px;
+      outline:none;
+    }
+    input[type="number"]{ width:74px; }
+    .toggle{
+      width:18px; height:18px;
+      accent-color: var(--accent);
+    }
+    .xbtn{
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
+      color:var(--muted);
+      width:32px; height:32px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+    .xbtn:hover{ color:var(--text); border-color: rgba(255,255,255,.25); }
+
+    /* Grid */
+    .gridWrap{ padding:14px; }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap:8px;
+    }
+    .cell{
+      position:relative;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.18));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:10px;
+      padding:8px 8px 10px;
+      min-height:56px;
+      overflow:hidden;
+      transition: transform .08s ease, border-color .12s ease, box-shadow .12s ease;
+    }
+    .cell:nth-child(odd){ background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.20)); }
+    .cell .n{
+      font-weight:800;
+      font-size:13px;
+      opacity:.95;
+    }
+    .dots{
+      position:absolute;
+      left:8px; right:8px; bottom:7px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      align-items:center;
+      pointer-events:none;
+    }
+    .dot{
+      width:9px; height:9px; border-radius:99px;
+      border:1px solid rgba(255,255,255,.22);
+      opacity:.95;
+      box-shadow: 0 0 0 2px rgba(0,0,0,.22);
+    }
+    .cell.current{
+      border-color: rgba(255,255,255,.35);
+      box-shadow: 0 0 0 2px rgba(255,255,255,.10), 0 10px 25px rgba(0,0,0,.35);
+      transform: translateY(-1px);
+    }
+    .cell.current::after{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius:10px;
+      box-shadow: 0 0 0 2px rgba(105,210,255,.22) inset;
+      pointer-events:none;
+    }
+    .legend{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .legendItem{
+      display:flex; gap:8px; align-items:center;
+      padding:6px 9px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.15);
+      color:var(--muted);
+      font-size:12px;
+    }
+    .legendItem .swatch{ width:10px; height:10px; border-radius:99px; }
+    .divider{ height:1px; background: rgba(255,255,255,.08); margin:12px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>100s Chart Polyrhythm Sequencer</h1>
+    <p class="sub">Each “count-by” lane hits on multiples of its number (2s, 3s, 5s, 10s…). Overlaps become chords.</p>
+  </header>
+
+  <div class="wrap">
+    <section class="card">
+      <h2>Transport & Sound</h2>
+      <div class="content">
+        <div class="row" style="justify-content:space-between;">
+          <button id="playBtn" class="btn primary">▶ Play</button>
+          <button id="stopBtn" class="btn danger">■ Stop</button>
+          <span class="pill"><span id="stepReadout">Step 1 / 100</span></span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div style="flex:1;">
+            <label for="tempo">Tempo: <b><span id="tempoVal">120</span></b> BPM</label>
+            <input id="tempo" type="range" min="40" max="240" value="120" />
+          </div>
+        </div>
+
+        <div class="row">
+          <label for="stepUnit">Step unit</label>
+          <select id="stepUnit">
+            <option value="16">Step = 16th note</option>
+            <option value="8">Step = 8th note</option>
+            <option value="4">Step = quarter note</option>
+          </select>
+          <span class="small">Loop is always 100 steps.</span>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <label for="scale">Scale</label>
+          <select id="scale">
+            <option value="majPent">Major pentatonic</option>
+            <option value="minPent">Minor pentatonic</option>
+            <option value="major">Major</option>
+            <option value="dorian">Dorian</option>
+          </select>
+
+          <label for="root">Root</label>
+          <select id="root">
+            <option value="C" selected>C</option><option value="C#">C#</option><option value="D">D</option><option value="Eb">Eb</option>
+            <option value="E">E</option><option value="F">F</option><option value="F#">F#</option><option value="G">G</option>
+            <option value="Ab">Ab</option><option value="A">A</option><option value="Bb">Bb</option><option value="B">B</option>
+          </select>
+
+          <label for="oct">Oct</label>
+          <select id="oct">
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button id="autoAssign" class="btn">Auto-assign “sweet” notes</button>
+          <span class="small">Keeps chords consonant on overlaps.</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <label for="vol">Volume</label>
+          <input id="vol" type="range" min="0" max="1" step="0.01" value="0.65" style="flex:1;" />
+        </div>
+
+        <div class="row">
+          <label for="tone">Tone</label>
+          <select id="tone">
+            <option value="triangle" selected>Soft (triangle)</option>
+            <option value="sine">Pure (sine)</option>
+            <option value="sawtooth">Bright (saw)</option>
+          </select>
+
+          <label for="cutoff">Filter</label>
+          <input id="cutoff" type="range" min="300" max="8000" step="10" value="1800" style="flex:1;" />
+        </div>
+
+        <div class="row">
+          <label for="space">Space</label>
+          <input id="space" type="range" min="0" max="1" step="0.01" value="0.35" style="flex:1;" />
+          <span class="small">Delay/reverb-ish</span>
+        </div>
+
+        <p class="small" style="margin-top:10px;">
+          Tip: Start with lanes 2, 3, 5, 10. Notice 30 becomes a nice chord.
+        </p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Grid & Lanes</h2>
+      <div class="gridWrap">
+        <div class="row" style="gap:8px; align-items:flex-end;">
+          <div style="flex:1;">
+            <label class="small">Add a lane (count-by)</label>
+            <div class="row" style="gap:8px;">
+              <input id="newDiv" type="number" min="2" max="100" value="7" />
+              <button id="addLane" class="btn">Add</button>
+              <span class="small">2–100</span>
+            </div>
+          </div>
+          <span class="pill">Overlaps = chord</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div id="lanes" class="lanes"></div>
+
+        <div class="divider"></div>
+
+        <div id="grid" class="grid" aria-label="100-step grid"></div>
+
+        <div id="legend" class="legend"></div>
+      </div>
+    </section>
+  </div>
+
+<script>
+(() => {
+  // ---------- Musical helpers ----------
+  const ROOT_TO_SEMI = {C:0,"C#":1,D:2,Eb:3,E:4,F:5,"F#":6,G:7,Ab:8,A:9,Bb:10,B:11};
+  const SCALES = {
+    majPent: [0,2,4,7,9],
+    minPent: [0,3,5,7,10],
+    major:   [0,2,4,5,7,9,11],
+    dorian:  [0,2,3,5,7,9,10]
+  };
+  const midiToHz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+
+  // ---------- State ----------
+  const state = {
+    step: 1,
+    playing: false,
+    tempo: 120,
+    stepUnit: 16, // 16th by default
+    lanes: [],
+    // audio
+    ctx: null,
+    master: null,
+    comp: null,
+    filter: null,
+    delay: null,
+    fb: null,
+    wet: null,
+    dry: null,
+    tone: "triangle",
+    cutoff: 1800,
+    space: 0.35,
+    volume: 0.65,
+    // scheduler
+    nextNoteTime: 0,
+    timer: null
+  };
+
+  // ---------- DOM ----------
+  const $ = (id) => document.getElementById(id);
+  const gridEl = $("grid");
+  const lanesEl = $("lanes");
+  const legendEl = $("legend");
+  const tempoEl = $("tempo");
+  const tempoValEl = $("tempoVal");
+  const stepUnitEl = $("stepUnit");
+  const stepReadoutEl = $("stepReadout");
+  const scaleEl = $("scale");
+  const rootEl = $("root");
+  const octEl = $("oct");
+  const playBtn = $("playBtn");
+  const stopBtn = $("stopBtn");
+  const addLaneBtn = $("addLane");
+  const newDivEl = $("newDiv");
+  const autoAssignBtn = $("autoAssign");
+  const volEl = $("vol");
+  const toneEl = $("tone");
+  const cutoffEl = $("cutoff");
+  const spaceEl = $("space");
+
+  // ---------- Grid build ----------
+  const cellEls = [];
+  function buildGrid(){
+    gridEl.innerHTML = "";
+    cellEls.length = 0;
+    for(let i=1;i<=100;i++){
+      const c = document.createElement("div");
+      c.className = "cell";
+      c.dataset.n = String(i);
+
+      const n = document.createElement("div");
+      n.className = "n";
+      n.textContent = i;
+
+      const dots = document.createElement("div");
+      dots.className = "dots";
+
+      c.appendChild(n);
+      c.appendChild(dots);
+      gridEl.appendChild(c);
+      cellEls.push(c);
+    }
+  }
+
+  function updateGridDots(){
+    for(let i=1;i<=100;i++){
+      const cell = cellEls[i-1];
+      const dots = cell.querySelector(".dots");
+      dots.innerHTML = "";
+
+      const hits = getLaneHitsAt(i);
+      hits.forEach(l => {
+        const d = document.createElement("span");
+        d.className = "dot";
+        d.style.background = l.color;
+        dots.appendChild(d);
+      });
+    }
+  }
+
+  function setCurrentCell(step){
+    cellEls.forEach(el => el.classList.remove("current"));
+    const idx = step - 1;
+    if(cellEls[idx]) cellEls[idx].classList.add("current");
+    stepReadoutEl.textContent = `Step ${step} / 100`;
+  }
+
+  // ---------- Lanes ----------
+  function randomColor(){
+    // pleasant bright-ish colors
+    const palette = ["#69d2ff","#ffd166","#ef476f","#06d6a0","#b388ff","#ff9f1c","#4cc9f0","#f72585","#a7f3d0","#fca5a5"];
+    return palette[Math.floor(Math.random()*palette.length)];
+  }
+
+  function addLane(divisor, color=null){
+    divisor = Math.max(2, Math.min(100, Math.floor(divisor)));
+    if(state.lanes.some(l => l.divisor === divisor)) return;
+
+    state.lanes.push({
+      id: crypto.randomUUID(),
+      divisor,
+      enabled: true,
+      color: color || randomColor(),
+      // noteDegree is an index into the current scale array (wrap ok)
+      noteDegree: 0
+    });
+
+    state.lanes.sort((a,b) => a.divisor - b.divisor);
+    renderLanes();
+    autoAssignSweetNotes(); // keeps it musical as you add lanes
+    updateGridDots();
+  }
+
+  function removeLane(id){
+    state.lanes = state.lanes.filter(l => l.id !== id);
+    renderLanes();
+    updateGridDots();
+  }
+
+  function renderLanes(){
+    lanesEl.innerHTML = "";
+    legendEl.innerHTML = "";
+
+    state.lanes.forEach((lane, idx) => {
+      const row = document.createElement("div");
+      row.className = "lane";
+
+      const sw = document.createElement("div");
+      sw.className = "swatch";
+      sw.style.background = lane.color;
+
+      const title = document.createElement("div");
+      title.className = "title";
+      title.innerHTML = `<b>Count by ${lane.divisor}</b><span>Hits: ${Math.floor(100 / lane.divisor)} times</span>`;
+
+      const controls = document.createElement("div");
+      controls.className = "controls";
+
+      const toggle = document.createElement("input");
+      toggle.type = "checkbox";
+      toggle.className = "toggle";
+      toggle.checked = lane.enabled;
+      toggle.addEventListener("change", () => {
+        lane.enabled = toggle.checked;
+        updateGridDots();
+        renderLegend();
+      });
+
+      const noteSel = document.createElement("select");
+      noteSel.title = "Note (scale degree)";
+      // show 0..(scaleLen-1) as "Degree 1.."
+      const scale = currentScale();
+      for(let i=0;i<Math.max(scale.length, 7); i++){
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = `Deg ${i+1}`;
+        noteSel.appendChild(opt);
+      }
+      noteSel.value = String(lane.noteDegree);
+      noteSel.addEventListener("change", () => {
+        lane.noteDegree = parseInt(noteSel.value,10);
+      });
+
+      const del = document.createElement("button");
+      del.className = "xbtn";
+      del.textContent = "✕";
+      del.title = "Remove lane";
+      del.addEventListener("click", () => removeLane(lane.id));
+
+      controls.appendChild(toggle);
+      controls.appendChild(noteSel);
+      controls.appendChild(del);
+
+      row.appendChild(sw);
+      row.appendChild(title);
+      row.appendChild(controls);
+      lanesEl.appendChild(row);
+    });
+
+    renderLegend();
+  }
+
+  function renderLegend(){
+    legendEl.innerHTML = "";
+    state.lanes.filter(l => l.enabled).forEach(l => {
+      const item = document.createElement("div");
+      item.className = "legendItem";
+      item.innerHTML = `<span class="swatch" style="background:${l.color}"></span><span>${l.divisor}s</span>`;
+      legendEl.appendChild(item);
+    });
+  }
+
+  function getLaneHitsAt(step){
+    return state.lanes.filter(l => l.enabled && step % l.divisor === 0);
+  }
+
+  // ---------- Sweet note assignment ----------
+  function currentScale(){
+    return SCALES[scaleEl.value] || SCALES.majPent;
+  }
+
+  function autoAssignSweetNotes(){
+    // Assign each lane a different degree in a consonant scale
+    // Smaller divisors (more frequent) get more "stable" degrees early.
+    const degrees = currentScale().map((_,i)=>i); // 0..len-1
+    // Spread degrees across lanes; wrap if more lanes than scale degrees.
+    state.lanes.forEach((lane, i) => {
+      lane.noteDegree = degrees[i % degrees.length];
+    });
+    renderLanes();
+  }
+
+  // ---------- Audio ----------
+  function ensureAudio(){
+    if(state.ctx) return;
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    state.ctx = ctx;
+
+    // Master chain:
+    // voices -> filter -> (dry + wet delay) -> compressor -> destination
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = state.cutoff;
+    filter.Q.value = 0.7;
+
+    const dry = ctx.createGain();
+    const wet = ctx.createGain();
+    dry.gain.value = 1.0;
+    wet.gain.value = state.space;
+
+    const delay = ctx.createDelay(1.5);
+    delay.delayTime.value = 0.28; // musical-ish
+    const fb = ctx.createGain();
+    fb.gain.value = 0.28;
+
+    // feedback loop
+    delay.connect(fb);
+    fb.connect(delay);
+
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -18;
+    comp.knee.value = 12;
+    comp.ratio.value = 4;
+    comp.attack.value = 0.003;
+    comp.release.value = 0.18;
+
+    const master = ctx.createGain();
+    master.gain.value = state.volume;
+
+    // wiring
+    filter.connect(dry);
+    filter.connect(delay);
+    dry.connect(comp);
+    delay.connect(wet);
+    wet.connect(comp);
+    comp.connect(master);
+    master.connect(ctx.destination);
+
+    state.filter = filter;
+    state.dry = dry;
+    state.wet = wet;
+    state.delay = delay;
+    state.fb = fb;
+    state.comp = comp;
+    state.master = master;
+
+    // Start scheduler time base
+    state.nextNoteTime = ctx.currentTime + 0.05;
+  }
+
+  function updateAudioParams(){
+    if(!state.ctx) return;
+    state.master.gain.setTargetAtTime(state.volume, state.ctx.currentTime, 0.02);
+    state.filter.frequency.setTargetAtTime(state.cutoff, state.ctx.currentTime, 0.02);
+    state.wet.gain.setTargetAtTime(state.space, state.ctx.currentTime, 0.02);
+  }
+
+  function degreeToMidi(degreeIndex){
+    const scale = currentScale();
+    const rootSemi = ROOT_TO_SEMI[rootEl.value] ?? 0;
+    const oct = parseInt(octEl.value,10);
+
+    // base: C0 = MIDI 12, so root at octave -> (12 + 12*oct + semi)
+    const base = 12 + 12*oct + rootSemi;
+
+    // allow degreeIndex beyond scale length by cycling + octave up
+    const len = scale.length;
+    const octShift = Math.floor(degreeIndex / len);
+    const degree = scale[((degreeIndex % len) + len) % len];
+    return base + degree + 12*octShift;
+  }
+
+  function playChordForHits(hits, time){
+    if(!state.ctx || hits.length === 0) return;
+
+    // Voicing: sort by divisor so "more fundamental" lanes go lower
+    const ordered = [...hits].sort((a,b) => a.divisor - b.divisor);
+
+    // Build distinct MIDI notes (avoid duplicates on overlaps)
+    const mids = [];
+    ordered.forEach((lane, i) => {
+      // Spread a bit if many notes: every 3rd note goes up an octave
+      const degree = lane.noteDegree + (i >= 3 ? (i-2) : 0);
+      let midi = degreeToMidi(degree);
+
+      // If two notes land same MIDI, bump one up an octave
+      while(mids.includes(midi)) midi += 12;
+      mids.push(midi);
+    });
+
+    const ctx = state.ctx;
+
+    mids.forEach((midi, i) => {
+      const f = midiToHz(midi);
+
+      // Two slightly detuned oscillators for a "nice" tone
+      const o1 = ctx.createOscillator();
+      const o2 = ctx.createOscillator();
+      o1.type = state.tone;
+      o2.type = state.tone;
+      o1.frequency.value = f;
+      o2.frequency.value = f * 1.003; // subtle detune
+
+      const g = ctx.createGain();
+      // envelope (soft pluck)
+      const t0 = time;
+      const attack = 0.008;
+      const decay = 0.12;
+      const sustain = 0.25;
+      const release = 0.18;
+
+      const baseAmp = 0.11; // overall per-note amplitude before compressor
+      const chordScale = 1 / Math.sqrt(mids.length); // keep chords from blasting
+
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(baseAmp * chordScale, t0 + attack);
+      g.gain.exponentialRampToValueAtTime(baseAmp * chordScale * sustain, t0 + attack + decay);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + decay + release);
+
+      // tiny stereo-ish by small delay on second osc
+      o1.connect(g);
+      o2.connect(g);
+      g.connect(state.filter);
+
+      o1.start(t0);
+      o2.start(t0 + 0.002);
+      const stopT = t0 + attack + decay + release + 0.02;
+      o1.stop(stopT);
+      o2.stop(stopT);
+    });
+  }
+
+  // ---------- Scheduler ----------
+  function secondsPerStep(){
+    // BPM is quarter-notes per minute.
+    // If stepUnit = 16, step = 16th -> 4 steps per quarter.
+    const stepsPerQuarter = (state.stepUnit === 16) ? 4 : (state.stepUnit === 8 ? 2 : 1);
+    return (60 / state.tempo) / stepsPerQuarter;
+  }
+
+  function scheduleStep(step, time){
+    const hits = getLaneHitsAt(step);
+    playChordForHits(hits, time);
+  }
+
+  function schedulerTick(){
+    const ctx = state.ctx;
+    if(!ctx) return;
+
+    const lookahead = 0.12; // seconds
+    while(state.nextNoteTime < ctx.currentTime + lookahead){
+      // schedule audio for current step
+      scheduleStep(state.step, state.nextNoteTime);
+
+      // schedule UI update close to audio time (simple approach)
+      const stepToShow = state.step;
+      const when = state.nextNoteTime;
+      setTimeout(() => {
+        if(state.playing) setCurrentCell(stepToShow);
+      }, Math.max(0, (when - ctx.currentTime) * 1000 - 5));
+
+      // advance
+      state.step++;
+      if(state.step > 100) state.step = 1;
+      state.nextNoteTime += secondsPerStep();
+    }
+  }
+
+  function start(){
+    ensureAudio();
+    state.playing = true;
+    // resume for autoplay policies
+    state.ctx.resume?.();
+
+    // align time base
+    state.nextNoteTime = state.ctx.currentTime + 0.05;
+
+    clearInterval(state.timer);
+    state.timer = setInterval(schedulerTick, 25);
+
+    playBtn.textContent = "⏸ Pause";
+  }
+
+  function stop(){
+    state.playing = false;
+    clearInterval(state.timer);
+    state.timer = null;
+    playBtn.textContent = "▶ Play";
+    state.step = 1;
+    setCurrentCell(1);
+  }
+
+  function togglePlay(){
+    if(!state.playing) start();
+    else {
+      // pause (keep current step)
+      state.playing = false;
+      clearInterval(state.timer);
+      state.timer = null;
+      playBtn.textContent = "▶ Play";
+    }
+  }
+
+  // ---------- UI events ----------
+  tempoEl.addEventListener("input", () => {
+    state.tempo = parseInt(tempoEl.value, 10);
+    tempoValEl.textContent = String(state.tempo);
+  });
+
+  stepUnitEl.addEventListener("change", () => {
+    state.stepUnit = parseInt(stepUnitEl.value, 10);
+  });
+
+  volEl.addEventListener("input", () => {
+    state.volume = parseFloat(volEl.value);
+    updateAudioParams();
+  });
+
+  toneEl.addEventListener("change", () => {
+    state.tone = toneEl.value;
+  });
+
+  cutoffEl.addEventListener("input", () => {
+    state.cutoff = parseFloat(cutoffEl.value);
+    updateAudioParams();
+  });
+
+  spaceEl.addEventListener("input", () => {
+    state.space = parseFloat(spaceEl.value);
+    updateAudioParams();
+  });
+
+  scaleEl.addEventListener("change", () => {
+    // keep things consonant if scale changes
+    autoAssignSweetNotes();
+    updateGridDots();
+  });
+  rootEl.addEventListener("change", () => {});
+  octEl.addEventListener("change", () => {});
+
+  playBtn.addEventListener("click", togglePlay);
+  stopBtn.addEventListener("click", stop);
+
+  addLaneBtn.addEventListener("click", () => {
+    const v = parseInt(newDivEl.value, 10);
+    if(Number.isFinite(v)) addLane(v);
+  });
+
+  autoAssignBtn.addEventListener("click", () => {
+    autoAssignSweetNotes();
+  });
+
+  // ---------- Init ----------
+  buildGrid();
+
+  // Preload the classic kid-chart vibe (feel free to change):
+  addLane(2,  "#69d2ff");
+  addLane(3,  "#ffd166");
+  addLane(5,  "#ef476f");
+  addLane(10, "#06d6a0");
+  // Keep default sweet notes so 30 = a nice triad-ish chord.
+  autoAssignSweetNotes();
+
+  setCurrentCell(1);
+})();
+</script>
+</body>
+</html>
