@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chord Blending Visualization Comparison</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0f14;
+      --panel: #111823;
+      --text: #e7eef8;
+      --muted: #a6b4c6;
+
+      --cyan: #69d2ff;
+      --yellow: #ffd166;
+      --pink: #ef476f;
+      --green: #06d6a0;
+      --purple: #b388ff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 12px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 48px;
+      font-size: 14px;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .technique {
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .technique h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      text-align: center;
+      color: var(--cyan);
+    }
+
+    .examples {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .example {
+      text-align: center;
+    }
+
+    .example-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto;
+      border-radius: 8px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Technique 1: Color Blending */
+    .blend-1 {
+      background: var(--cyan);
+    }
+
+    .blend-2 {
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--yellow) 100%);
+    }
+
+    .blend-3 {
+      background: linear-gradient(135deg,
+        var(--cyan) 0%,
+        var(--yellow) 50%,
+        var(--pink) 100%
+      );
+    }
+
+    /* Technique 2: Layered Glow */
+    .glow-base {
+      background: #0f1622;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .glow-1 .dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow:
+        0 0 20px 8px var(--cyan),
+        0 0 40px 12px rgba(105, 210, 255, 0.4);
+    }
+
+    .glow-2 {
+      display: flex;
+      gap: 8px;
+    }
+
+    .glow-2 .dot:nth-child(1) {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow:
+        0 0 20px 8px var(--cyan),
+        0 0 40px 12px rgba(105, 210, 255, 0.4);
+    }
+
+    .glow-2 .dot:nth-child(2) {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--yellow);
+      box-shadow:
+        0 0 20px 8px var(--yellow),
+        0 0 40px 12px rgba(255, 209, 102, 0.4);
+    }
+
+    .glow-3 {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 60px;
+    }
+
+    .glow-3 .dot:nth-child(1) {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow:
+        0 0 18px 6px var(--cyan),
+        0 0 35px 10px rgba(105, 210, 255, 0.4);
+    }
+
+    .glow-3 .dot:nth-child(2) {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--yellow);
+      box-shadow:
+        0 0 18px 6px var(--yellow),
+        0 0 35px 10px rgba(255, 209, 102, 0.4);
+    }
+
+    .glow-3 .dot:nth-child(3) {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--pink);
+      box-shadow:
+        0 0 18px 6px var(--pink),
+        0 0 35px 10px rgba(239, 71, 111, 0.4);
+    }
+
+    /* Technique 3: Cell Intensity */
+    .intensity-base {
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .intensity-1 {
+      background: linear-gradient(135deg, #0f1622 0%, rgba(105, 210, 255, 0.15) 100%);
+      box-shadow: 0 0 15px rgba(105, 210, 255, 0.2);
+    }
+
+    .intensity-2 {
+      background: linear-gradient(135deg,
+        rgba(105, 210, 255, 0.2) 0%,
+        rgba(255, 209, 102, 0.2) 100%
+      );
+      box-shadow:
+        0 0 20px rgba(105, 210, 255, 0.3),
+        0 0 20px rgba(255, 209, 102, 0.3);
+      transform: scale(1.05);
+    }
+
+    .intensity-3 {
+      background: linear-gradient(135deg,
+        rgba(105, 210, 255, 0.3) 0%,
+        rgba(255, 209, 102, 0.3) 50%,
+        rgba(239, 71, 111, 0.3) 100%
+      );
+      box-shadow:
+        0 0 25px rgba(105, 210, 255, 0.4),
+        0 0 25px rgba(255, 209, 102, 0.4),
+        0 0 25px rgba(239, 71, 111, 0.4);
+      transform: scale(1.1);
+    }
+
+    .intensity-3::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 8px;
+      background: linear-gradient(45deg, var(--cyan), var(--yellow), var(--pink));
+      opacity: 0.15;
+      z-index: -1;
+    }
+
+    /* Technique 4: Organic Patterns */
+    .pattern-base {
+      border: 1px solid rgba(255,255,255,0.1);
+      overflow: hidden;
+    }
+
+    .pattern-1 {
+      background:
+        radial-gradient(circle at 50% 50%,
+          rgba(105, 210, 255, 0.3) 0%,
+          transparent 50%
+        ),
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 10px,
+          rgba(105, 210, 255, 0.05) 10px,
+          rgba(105, 210, 255, 0.05) 20px
+        ),
+        #0f1622;
+    }
+
+    .pattern-2 {
+      background:
+        radial-gradient(circle at 30% 50%,
+          rgba(105, 210, 255, 0.3) 0%,
+          transparent 40%
+        ),
+        radial-gradient(circle at 70% 50%,
+          rgba(255, 209, 102, 0.3) 0%,
+          transparent 40%
+        ),
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 8px,
+          rgba(105, 210, 255, 0.08) 8px,
+          rgba(105, 210, 255, 0.08) 16px
+        ),
+        repeating-linear-gradient(
+          -45deg,
+          transparent,
+          transparent 8px,
+          rgba(255, 209, 102, 0.08) 8px,
+          rgba(255, 209, 102, 0.08) 16px
+        ),
+        #0f1622;
+    }
+
+    .pattern-3 {
+      background:
+        radial-gradient(circle at 30% 30%,
+          rgba(105, 210, 255, 0.25) 0%,
+          transparent 35%
+        ),
+        radial-gradient(circle at 70% 50%,
+          rgba(255, 209, 102, 0.25) 0%,
+          transparent 35%
+        ),
+        radial-gradient(circle at 50% 80%,
+          rgba(239, 71, 111, 0.25) 0%,
+          transparent 35%
+        ),
+        repeating-linear-gradient(
+          30deg,
+          transparent,
+          transparent 6px,
+          rgba(105, 210, 255, 0.1) 6px,
+          rgba(105, 210, 255, 0.1) 12px
+        ),
+        repeating-linear-gradient(
+          -60deg,
+          transparent,
+          transparent 6px,
+          rgba(255, 209, 102, 0.1) 6px,
+          rgba(255, 209, 102, 0.1) 12px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 6px,
+          rgba(239, 71, 111, 0.1) 6px,
+          rgba(239, 71, 111, 0.1) 12px
+        ),
+        #0f1622;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chord Blending Visualization Comparison</h1>
+  <p class="subtitle">Four different approaches to visualizing multiple rhythms hitting the same beat</p>
+
+  <div class="comparison">
+    <!-- Technique 1: Color Blending -->
+    <div class="technique">
+      <h2>1. Color Blending</h2>
+      <div class="examples">
+        <div class="example">
+          <div class="example-label">1 hit (cyan)</div>
+          <div class="cell blend-1"></div>
+        </div>
+        <div class="example">
+          <div class="example-label">2 hits (cyan + yellow)</div>
+          <div class="cell blend-2"></div>
+        </div>
+        <div class="example">
+          <div class="example-label">3 hits (cyan + yellow + pink)</div>
+          <div class="cell blend-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Technique 2: Layered Glow -->
+    <div class="technique">
+      <h2>2. Layered Glow</h2>
+      <div class="examples">
+        <div class="example">
+          <div class="example-label">1 hit (cyan)</div>
+          <div class="cell glow-base glow-1">
+            <div class="dot"></div>
+          </div>
+        </div>
+        <div class="example">
+          <div class="example-label">2 hits (cyan + yellow)</div>
+          <div class="cell glow-base glow-2">
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+        <div class="example">
+          <div class="example-label">3 hits (cyan + yellow + pink)</div>
+          <div class="cell glow-base glow-3">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Technique 3: Cell Intensity -->
+    <div class="technique">
+      <h2>3. Cell Intensity</h2>
+      <div class="examples">
+        <div class="example">
+          <div class="example-label">1 hit (cyan)</div>
+          <div class="cell intensity-base intensity-1"></div>
+        </div>
+        <div class="example">
+          <div class="example-label">2 hits (cyan + yellow)</div>
+          <div class="cell intensity-base intensity-2"></div>
+        </div>
+        <div class="example">
+          <div class="example-label">3 hits (cyan + yellow + pink)</div>
+          <div class="cell intensity-base intensity-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Technique 4: Organic Patterns -->
+    <div class="technique">
+      <h2>4. Organic Patterns</h2>
+      <div class="examples">
+        <div class="example">
+          <div class="example-label">1 hit (cyan)</div>
+          <div class="cell pattern-base pattern-1"></div>
+        </div>
+        <div class="example">
+          <div class="example-label">2 hits (cyan + yellow)</div>
+          <div class="cell pattern-base pattern-2"></div>
+        </div>
+        <div class="example">
+          <div class="example-label">3 hits (cyan + yellow + pink)</div>
+          <div class="cell pattern-base pattern-3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

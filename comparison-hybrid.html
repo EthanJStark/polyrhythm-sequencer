@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hybrid Blending Approaches</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0f14;
+      --panel: #111823;
+      --text: #e7eef8;
+      --muted: #a6b4c6;
+
+      --cyan: #69d2ff;
+      --yellow: #ffd166;
+      --pink: #ef476f;
+      --green: #06d6a0;
+      --purple: #b388ff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 12px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 48px;
+      font-size: 14px;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .technique {
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .technique h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      text-align: center;
+      color: var(--cyan);
+    }
+
+    .technique-desc {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+
+    .examples {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .example {
+      text-align: center;
+    }
+
+    .example-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto;
+      border-radius: 8px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* APPROACH A: Blended Background Star, Subtle Dots */
+    .approach-a-1 {
+      background: linear-gradient(135deg,
+        rgba(105, 210, 255, 0.4) 0%,
+        rgba(105, 210, 255, 0.2) 100%
+      );
+    }
+
+    .approach-a-1 .dots-container {
+      position: absolute;
+      bottom: 8px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .approach-a-1 .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+      opacity: 0.6;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .approach-a-2 {
+      background: linear-gradient(135deg,
+        rgba(105, 210, 255, 0.5) 0%,
+        rgba(255, 209, 102, 0.5) 100%
+      );
+    }
+
+    .approach-a-2 .dots-container {
+      position: absolute;
+      bottom: 8px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .approach-a-2 .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      opacity: 0.6;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .approach-a-2 .dot:nth-child(1) {
+      background: var(--cyan);
+    }
+
+    .approach-a-2 .dot:nth-child(2) {
+      background: var(--yellow);
+    }
+
+    .approach-a-3 {
+      background: linear-gradient(135deg,
+        rgba(105, 210, 255, 0.5) 0%,
+        rgba(255, 209, 102, 0.5) 50%,
+        rgba(239, 71, 111, 0.5) 100%
+      );
+    }
+
+    .approach-a-3 .dots-container {
+      position: absolute;
+      bottom: 8px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .approach-a-3 .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      opacity: 0.6;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .approach-a-3 .dot:nth-child(1) {
+      background: var(--cyan);
+    }
+
+    .approach-a-3 .dot:nth-child(2) {
+      background: var(--yellow);
+    }
+
+    .approach-a-3 .dot:nth-child(3) {
+      background: var(--pink);
+    }
+
+    /* APPROACH B: Dots/Glows Star, Subtle Background */
+    .approach-b {
+      background: #0f1622;
+    }
+
+    .approach-b-1 {
+      background: linear-gradient(135deg,
+        #0f1622 0%,
+        rgba(105, 210, 255, 0.1) 100%
+      );
+    }
+
+    .approach-b-1 .dots-container {
+      display: flex;
+      gap: 6px;
+    }
+
+    .approach-b-1 .dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow:
+        0 0 20px 8px var(--cyan),
+        0 0 40px 12px rgba(105, 210, 255, 0.4);
+    }
+
+    .approach-b-2 {
+      background: linear-gradient(135deg,
+        rgba(105, 210, 255, 0.08) 0%,
+        rgba(255, 209, 102, 0.08) 100%
+      );
+    }
+
+    .approach-b-2 .dots-container {
+      display: flex;
+      gap: 6px;
+    }
+
+    .approach-b-2 .dot:nth-child(1) {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow:
+        0 0 20px 8px var(--cyan),
+        0 0 40px 12px rgba(105, 210, 255, 0.4);
+    }
+
+    .approach-b-2 .dot:nth-child(2) {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--yellow);
+      box-shadow:
+        0 0 20px 8px var(--yellow),
+        0 0 40px 12px rgba(255, 209, 102, 0.4);
+    }
+
+    .approach-b-3 {
+      background: linear-gradient(135deg,
+        rgba(105, 210, 255, 0.08) 0%,
+        rgba(255, 209, 102, 0.08) 50%,
+        rgba(239, 71, 111, 0.08) 100%
+      );
+    }
+
+    .approach-b-3 .dots-container {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 60px;
+    }
+
+    .approach-b-3 .dot:nth-child(1) {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow:
+        0 0 18px 6px var(--cyan),
+        0 0 35px 10px rgba(105, 210, 255, 0.4);
+    }
+
+    .approach-b-3 .dot:nth-child(2) {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--yellow);
+      box-shadow:
+        0 0 18px 6px var(--yellow),
+        0 0 35px 10px rgba(255, 209, 102, 0.4);
+    }
+
+    .approach-b-3 .dot:nth-child(3) {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--pink);
+      box-shadow:
+        0 0 18px 6px var(--pink),
+        0 0 35px 10px rgba(239, 71, 111, 0.4);
+    }
+
+    /* APPROACH C: Equal Emphasis */
+    .approach-c-1 {
+      background: linear-gradient(135deg,
+        rgba(105, 210, 255, 0.25) 0%,
+        rgba(105, 210, 255, 0.15) 100%
+      );
+      box-shadow: 0 0 15px rgba(105, 210, 255, 0.2);
+    }
+
+    .approach-c-1 .dots-container {
+      display: flex;
+      gap: 6px;
+    }
+
+    .approach-c-1 .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow:
+        0 0 12px 4px rgba(105, 210, 255, 0.6),
+        0 0 24px 6px rgba(105, 210, 255, 0.3);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .approach-c-2 {
+      background: linear-gradient(135deg,
+        rgba(105, 210, 255, 0.3) 0%,
+        rgba(255, 209, 102, 0.3) 100%
+      );
+      box-shadow:
+        0 0 18px rgba(105, 210, 255, 0.25),
+        0 0 18px rgba(255, 209, 102, 0.25);
+    }
+
+    .approach-c-2 .dots-container {
+      display: flex;
+      gap: 6px;
+    }
+
+    .approach-c-2 .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .approach-c-2 .dot:nth-child(1) {
+      background: var(--cyan);
+      box-shadow:
+        0 0 12px 4px rgba(105, 210, 255, 0.6),
+        0 0 24px 6px rgba(105, 210, 255, 0.3);
+    }
+
+    .approach-c-2 .dot:nth-child(2) {
+      background: var(--yellow);
+      box-shadow:
+        0 0 12px 4px rgba(255, 209, 102, 0.6),
+        0 0 24px 6px rgba(255, 209, 102, 0.3);
+    }
+
+    .approach-c-3 {
+      background: linear-gradient(135deg,
+        rgba(105, 210, 255, 0.35) 0%,
+        rgba(255, 209, 102, 0.35) 50%,
+        rgba(239, 71, 111, 0.35) 100%
+      );
+      box-shadow:
+        0 0 20px rgba(105, 210, 255, 0.3),
+        0 0 20px rgba(255, 209, 102, 0.3),
+        0 0 20px rgba(239, 71, 111, 0.3);
+    }
+
+    .approach-c-3 .dots-container {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 60px;
+    }
+
+    .approach-c-3 .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .approach-c-3 .dot:nth-child(1) {
+      background: var(--cyan);
+      box-shadow:
+        0 0 10px 3px rgba(105, 210, 255, 0.6),
+        0 0 20px 5px rgba(105, 210, 255, 0.3);
+    }
+
+    .approach-c-3 .dot:nth-child(2) {
+      background: var(--yellow);
+      box-shadow:
+        0 0 10px 3px rgba(255, 209, 102, 0.6),
+        0 0 20px 5px rgba(255, 209, 102, 0.3);
+    }
+
+    .approach-c-3 .dot:nth-child(3) {
+      background: var(--pink);
+      box-shadow:
+        0 0 10px 3px rgba(239, 71, 111, 0.6),
+        0 0 20px 5px rgba(239, 71, 111, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <h1>Hybrid Blending Approaches</h1>
+  <p class="subtitle">Combining color blending + glowing dots in three different balances</p>
+
+  <div class="comparison">
+    <!-- Approach A -->
+    <div class="technique">
+      <h2>A. Blended Background Star</h2>
+      <p class="technique-desc">Bold gradient background, subtle indicator dots</p>
+      <div class="examples">
+        <div class="example">
+          <div class="example-label">1 hit (cyan)</div>
+          <div class="cell approach-a-1">
+            <div class="dots-container">
+              <div class="dot"></div>
+            </div>
+          </div>
+        </div>
+        <div class="example">
+          <div class="example-label">2 hits (cyan + yellow)</div>
+          <div class="cell approach-a-2">
+            <div class="dots-container">
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </div>
+          </div>
+        </div>
+        <div class="example">
+          <div class="example-label">3 hits (cyan + yellow + pink)</div>
+          <div class="cell approach-a-3">
+            <div class="dots-container">
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approach B -->
+    <div class="technique">
+      <h2>B. Glowing Dots Star</h2>
+      <p class="technique-desc">Luminous glowing dots, subtle background wash</p>
+      <div class="examples">
+        <div class="example">
+          <div class="example-label">1 hit (cyan)</div>
+          <div class="cell approach-b-1">
+            <div class="dots-container">
+              <div class="dot"></div>
+            </div>
+          </div>
+        </div>
+        <div class="example">
+          <div class="example-label">2 hits (cyan + yellow)</div>
+          <div class="cell approach-b-2">
+            <div class="dots-container">
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </div>
+          </div>
+        </div>
+        <div class="example">
+          <div class="example-label">3 hits (cyan + yellow + pink)</div>
+          <div class="cell approach-b-3">
+            <div class="dots-container">
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approach C -->
+    <div class="technique">
+      <h2>C. Equal Emphasis</h2>
+      <p class="technique-desc">Balanced blend background + moderate glow dots</p>
+      <div class="examples">
+        <div class="example">
+          <div class="example-label">1 hit (cyan)</div>
+          <div class="cell approach-c-1">
+            <div class="dots-container">
+              <div class="dot"></div>
+            </div>
+          </div>
+        </div>
+        <div class="example">
+          <div class="example-label">2 hits (cyan + yellow)</div>
+          <div class="cell approach-c-2">
+            <div class="dots-container">
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </div>
+          </div>
+        </div>
+        <div class="example">
+          <div class="example-label">3 hits (cyan + yellow + pink)</div>
+          <div class="cell approach-c-3">
+            <div class="dots-container">
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
